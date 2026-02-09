@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>hello</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: black;
+  color: red;
+  font-family: "Courier New", monospace;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.glow {
+  text-shadow: 0 0 6px rgba(255,0,0,0.8);
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.active {
+  display: flex;
+}
+
+button {
+  margin-top: 30px;
+  padding: 12px 30px;
+  background: black;
+  border: 1px solid red;
+  color: red;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255,0,0,0.6);
+}
+
+button:hover {
+  box-shadow: 0 0 16px rgba(255,0,0,1);
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SCREEN 1 -->
+<div class="screen active" id="screen1">
+  <div id="helloText" class="glow">hello,</div>
+</div>
+
+<!-- SCREEN 2 -->
+<div class="screen" id="screen2">
+  <div class="glow">i need you to do something for me...</div>
+</div>
+
+<!-- SCREEN 3 + IMAGE REVEAL -->
+<div class="screen" id="screen3">
+  <div class="glow">please click and drag your mouse</div>
+  <img id="hiddenImg" src="https://picsum.photos/800/600" />
+  <canvas id="scratch"></canvas>
+  <button id="nextBtn" style="display:none;">want to see more?</button>
+</div>
+
+<script>
+let currentReveal = 0;
+const totalReveals = 5;
+
+const screens = [
+  document.getElementById("screen1"),
+  document.getElementById("screen2"),
+  document.getElementById("screen3")
+];
+
+const helloText = document.getElementById("helloText");
+
+setTimeout(() => {
+  helloText.innerHTML = "hello, abdullah";
+}, 3000);
+
+setTimeout(() => {
+  const btn = document.createElement("button");
+  btn.innerText = "hello";
+  btn.onclick = () => showScreen(1);
+  screens[0].appendChild(btn);
+}, 6000);
+
+setTimeout(() => {
+  const btn = document.createElement("button");
+  btn.innerText = "of course baby";
+  btn.onclick = () => startReveal();
+  screens[1].appendChild(btn);
+}, 3000);
+
+function showScreen(i) {
+  screens.forEach(s => s.classList.remove("active"));
+  screens[i].classList.add("active");
+}
+
+function startReveal() {
+  showScreen(2);
+  setupScratch();
+}
+
+const canvas = document.getElementById("scratch");
+const ctx = canvas.getContext("2d");
+const img = document.getElementById("hiddenImg");
+const nextBtn = document.getElementById("nextBtn");
+
+function setupScratch() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let drawing = false;
+
+  canvas.onmousedown = () => drawing = true;
+  canvas.onmouseup = () => drawing = false;
+
+  canvas.onmousemove = e => {
+    if (!drawing) return;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(e.clientX, e.clientY, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    checkReveal();
+  };
+}
+
+function checkReveal() {
+  const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  let cleared = 0;
+  for (let i = 3; i < pixels.length; i += 4) {
+    if (pixels[i] === 0) cleared++;
+  }
+  if (cleared / (pixels.length / 4) > 0.5) {
+    nextBtn.style.display = "block";
+    nextBtn.onmouseenter = () => nextBtn.innerText = "yes";
+    nextBtn.onclick = nextImage;
+  }
+}
+
+function nextImage() {
+  currentReveal++;
+  if (currentReveal >= totalReveals) {
+    nextBtn.innerText = "happy valentines day ;)";
+    nextBtn.onmouseenter = null;
+    nextBtn.onclick = () => location.reload();
+    return;
+  }
+
+  img.src = `https://picsum.photos/800/600?random=${currentReveal}`;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  nextBtn.style.display = "none";
+}
+</script>
+
+</body>
+</html>
