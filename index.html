@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>hello</title>
 
 <style>
 html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
   background: black;
   color: red;
   font-family: "Courier New", monospace;
-  width: 100%;
-  height: 100%;
   overflow: hidden;
-}
-
-.glow {
-  text-shadow: 0 0 6px rgba(255,0,0,0.8);
 }
 
 .screen {
@@ -27,38 +23,54 @@ html, body {
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  position: relative;
 }
 
 .active {
   display: flex;
 }
 
+.glow {
+  text-shadow: 0 0 8px rgba(255,0,0,0.8);
+}
+
 button {
   margin-top: 30px;
-  padding: 12px 30px;
+  padding: 14px 32px;
   background: black;
   border: 1px solid red;
   color: red;
-  font-family: inherit;
   font-weight: bold;
+  font-family: inherit;
+  border-radius: 10px;
   cursor: pointer;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(255,0,0,0.6);
+  box-shadow: 0 0 12px rgba(255,0,0,0.6);
 }
 
 button:hover {
-  box-shadow: 0 0 16px rgba(255,0,0,1);
+  box-shadow: 0 0 18px rgba(255,0,0,1);
+}
+
+#imageContainer {
+  position: absolute;
+  inset: 0;
+}
+
+#imageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 canvas {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
 }
 
-img {
-  max-width: 100%;
-  max-height: 100%;
+#revealBtn {
+  position: absolute;
+  bottom: 60px;
+  display: none;
 }
 </style>
 </head>
@@ -66,118 +78,124 @@ img {
 <body>
 
 <!-- SCREEN 1 -->
-<div class="screen active" id="screen1">
-  <div id="helloText" class="glow">hello,</div>
+<div class="screen active" id="s1">
+  <div id="hello" class="glow">hello,</div>
 </div>
 
 <!-- SCREEN 2 -->
-<div class="screen" id="screen2">
-  <div class="glow">i need you to do something for me...</div>
+<div class="screen" id="s2">
+  <div id="taskText" class="glow">i need you to do something for me...</div>
 </div>
 
-<!-- SCREEN 3 + IMAGE REVEAL -->
-<div class="screen" id="screen3">
-  <div class="glow">please click and drag your mouse</div>
-  <img id="hiddenImg" src="https://picsum.photos/800/600" />
-  <canvas id="scratch"></canvas>
-  <button id="nextBtn" style="display:none;">want to see more?</button>
+<!-- SCREEN 3 (REVEAL LOOP) -->
+<div class="screen" id="s3">
+  <div class="glow" style="position:absolute; top:40px;">
+    please click and drag your cursor across the screen
+  </div>
+
+  <div id="imageContainer">
+    <img id="photo" src="pic1.jpg">
+    <canvas id="scratch"></canvas>
+  </div>
+
+  <button id="revealBtn">want to see more?</button>
 </div>
 
 <script>
-let currentReveal = 0;
-const totalReveals = 5;
-
-const screens = [
-  document.getElementById("screen1"),
-  document.getElementById("screen2"),
-  document.getElementById("screen3")
-];
-
-const helloText = document.getElementById("helloText");
-
-setTimeout(() => {
-  helloText.innerHTML = "hello, abdullah";
-}, 3000);
-
-setTimeout(() => {
-  const btn = document.createElement("button");
-  btn.innerText = "hello";
-  btn.onclick = () => showScreen(1);
-  screens[0].appendChild(btn);
-}, 6000);
-
-setTimeout(() => {
-  const btn = document.createElement("button");
-  btn.innerText = "of course baby";
-  btn.onclick = () => startReveal();
-  screens[1].appendChild(btn);
-}, 3000);
-
-function showScreen(i) {
-  screens.forEach(s => s.classList.remove("active"));
-  screens[i].classList.add("active");
-}
-
-function startReveal() {
-  showScreen(2);
-  setupScratch();
-}
-
+const screens = [...document.querySelectorAll(".screen")];
+const hello = document.getElementById("hello");
+const taskText = document.getElementById("taskText");
+const btnReveal = document.getElementById("revealBtn");
 const canvas = document.getElementById("scratch");
 const ctx = canvas.getContext("2d");
-const img = document.getElementById("hiddenImg");
-const nextBtn = document.getElementById("nextBtn");
+const photo = document.getElementById("photo");
 
-function setupScratch() {
+let currentPic = 1;
+const totalPics = 5;
+
+/* ---------- SCREEN 1 ---------- */
+setTimeout(() => hello.textContent = "hello, abdullah", 3000);
+
+setTimeout(() => {
+  const b = document.createElement("button");
+  b.textContent = "hello";
+  b.onclick = () => show(1);
+  screens[0].appendChild(b);
+}, 6000);
+
+/* ---------- SCREEN 2 ---------- */
+setTimeout(() => {
+  taskText.textContent += " as always...";
+}, 3000);
+
+setTimeout(() => {
+  const b = document.createElement("button");
+  b.textContent = "of course baby";
+  b.onclick = () => {
+    show(2);
+    startScratch();
+  };
+  screens[1].appendChild(b);
+}, 6000);
+
+/* ---------- SCRATCH LOGIC ---------- */
+function startScratch() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
+  ctx.globalCompositeOperation = "source-over";
   ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  let drawing = false;
+  let scratching = false;
 
-  canvas.onmousedown = () => drawing = true;
-  canvas.onmouseup = () => drawing = false;
-
+  canvas.onmousedown = () => scratching = true;
+  canvas.onmouseup = () => scratching = false;
   canvas.onmousemove = e => {
-    if (!drawing) return;
+    if (!scratching) return;
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(e.clientX, e.clientY, 30, 0, Math.PI * 2);
+    ctx.arc(e.clientX, e.clientY, 35, 0, Math.PI * 2);
     ctx.fill();
-
     checkReveal();
   };
 }
 
 function checkReveal() {
-  const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let cleared = 0;
-  for (let i = 3; i < pixels.length; i += 4) {
-    if (pixels[i] === 0) cleared++;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] === 0) cleared++;
   }
-  if (cleared / (pixels.length / 4) > 0.5) {
-    nextBtn.style.display = "block";
-    nextBtn.onmouseenter = () => nextBtn.innerText = "yes";
-    nextBtn.onclick = nextImage;
+
+  if (cleared / (data.length / 4) > 0.6) {
+    btnReveal.style.display = "block";
   }
 }
 
-function nextImage() {
-  currentReveal++;
-  if (currentReveal >= totalReveals) {
-    nextBtn.innerText = "happy valentines day ;)";
-    nextBtn.onmouseenter = null;
-    nextBtn.onclick = () => location.reload();
+/* ---------- BUTTON BEHAVIOUR ---------- */
+btnReveal.onmouseenter = () => btnReveal.textContent = "yes";
+btnReveal.onmouseleave = () => btnReveal.textContent = "want to see more?";
+
+btnReveal.onclick = () => {
+  currentPic++;
+  if (currentPic > totalPics) {
+    btnReveal.textContent = "happy valentines day ;)";
+    btnReveal.onmouseenter = null;
+    btnReveal.onmouseleave = null;
+    btnReveal.onclick = () => location.reload();
     return;
   }
 
-  img.src = `https://picsum.photos/800/600?random=${currentReveal}`;
-  ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = "black";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  nextBtn.style.display = "none";
+  photo.src = `pic${currentPic}.jpg`;
+  btnReveal.style.display = "none";
+  startScratch();
+};
+
+/* ---------- UTILS ---------- */
+function show(i) {
+  screens.forEach(s => s.classList.remove("active"));
+  screens[i].classList.add("active");
 }
 </script>
 
