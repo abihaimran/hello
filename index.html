@@ -79,7 +79,7 @@ canvas {
 
 <!-- SCREEN 1 -->
 <div class="screen active" id="s1">
-  <div id="helloText" class="glow">hello,</div>
+  <div id="helloText" class="glow"></div>
 </div>
 
 <!-- SCREEN 2 -->
@@ -114,10 +114,26 @@ let scratching = false;
 let currentPic = 1;
 const totalPics = 5;
 
+/* ---------- TYPING FUNCTION ---------- */
+function typeText(element, text, speed = 70, callback) {
+  element.textContent = "";
+  let i = 0;
+  const interval = setInterval(() => {
+    element.textContent += text[i];
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      if (callback) callback();
+    }
+  }, speed);
+}
+
 /* ---------- SCREEN 1 ---------- */
-setTimeout(() => {
-  helloText.textContent = "hello, abdullah";
-}, 3000);
+typeText(helloText, "hello,", 80, () => {
+  setTimeout(() => {
+    typeText(helloText, "hello, abdullah", 80);
+  }, 3000);
+});
 
 setTimeout(() => {
   const btn = document.createElement("button");
@@ -131,11 +147,11 @@ setTimeout(() => {
 
 /* ---------- SCREEN 2 ---------- */
 function startScreen2() {
-  taskText.textContent = "i need you to do something for me...";
-
-  setTimeout(() => {
-    taskText.textContent += " as always...";
-  }, 3000);
+  typeText(taskText, "i need you to do something for me...", 70, () => {
+    setTimeout(() => {
+      typeText(taskText, "i need you to do something for me... as always...", 70);
+    }, 3000);
+  });
 
   setTimeout(() => {
     const btn = document.createElement("button");
