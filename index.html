@@ -26,16 +26,25 @@ html, body {
   position: relative;
 }
 
-.active {
-  display: flex;
-}
+.active { display: flex; }
 
 .glow {
   text-shadow: 0 0 8px rgba(255,0,0,0.85);
 }
 
+.cursor::after {
+  content: "▌";
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 button {
-  margin-top: 30px;
+  position: absolute;
+  bottom: 60px;
   padding: 14px 34px;
   background: black;
   border: 1px solid red;
@@ -67,9 +76,13 @@ canvas {
   inset: 0;
 }
 
-#revealBtn {
+#instruction {
   position: absolute;
-  bottom: 60px;
+  text-align: center;
+  z-index: 10;
+}
+
+#revealBtn {
   display: none;
 }
 </style>
@@ -89,9 +102,7 @@ canvas {
 
 <!-- SCREEN 3 -->
 <div class="screen" id="s3">
-  <div class="glow" style="position:absolute; top:40px; z-index:10;">
-    baby, please click and drag your mouse across the screen for me
-  </div>
+  <div id="instruction" class="glow"></div>
 
   <div id="imageContainer">
     <img id="photo" src="pic1.jpg">
@@ -105,6 +116,7 @@ canvas {
 const screens = document.querySelectorAll(".screen");
 const helloText = document.getElementById("helloText");
 const taskText = document.getElementById("taskText");
+const instruction = document.getElementById("instruction");
 const canvas = document.getElementById("scratch");
 const ctx = canvas.getContext("2d");
 const photo = document.getElementById("photo");
@@ -113,25 +125,27 @@ const revealBtn = document.getElementById("revealBtn");
 let scratching = false;
 let currentPic = 1;
 const totalPics = 5;
+let instructionText = "baby, please click and drag your mouse across the screen for me";
 
-/* ---------- TYPING FUNCTION ---------- */
-function typeText(element, text, speed = 70, callback) {
-  element.textContent = "";
+/* ---------- TYPING ---------- */
+function typeAppend(el, text, speed = 70, callback) {
+  el.classList.add("cursor");
   let i = 0;
   const interval = setInterval(() => {
-    element.textContent += text[i];
+    el.textContent += text[i];
     i++;
     if (i >= text.length) {
       clearInterval(interval);
+      el.classList.remove("cursor");
       if (callback) callback();
     }
   }, speed);
 }
 
 /* ---------- SCREEN 1 ---------- */
-typeText(helloText, "hello,", 80, () => {
+typeAppend(helloText, "hello,", 80, () => {
   setTimeout(() => {
-    typeText(helloText, "hello, abdullah", 80);
+    typeAppend(helloText, " abdullah", 80);
   }, 3000);
 });
 
@@ -147,9 +161,9 @@ setTimeout(() => {
 
 /* ---------- SCREEN 2 ---------- */
 function startScreen2() {
-  typeText(taskText, "i need you to do something for me...", 70, () => {
+  typeAppend(taskText, "i need you to do something for me...", 70, () => {
     setTimeout(() => {
-      typeText(taskText, "i need you to do something for me... as always...", 70);
+      typeAppend(taskText, " as always...", 70);
     }, 3000);
   });
 
@@ -174,9 +188,14 @@ function startScratch() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   scratching = false;
+  instruction.textContent = "";
+  typeAppend(instruction, instructionText, 60);
 }
 
 function scratch(x, y) {
+  if (!scratching) {
+    instruction.textContent = "";
+  }
   ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
   ctx.arc(x, y, 36, 0, Math.PI * 2);
@@ -192,24 +211,21 @@ canvas.onmousemove = e => {
   scratch(e.clientX, e.clientY);
 };
 
-/* Touch (iPhone) */
+/* Touch */
 canvas.ontouchstart = () => scratching = true;
 canvas.ontouchend = () => scratching = false;
 canvas.ontouchmove = e => {
   if (!scratching) return;
-  const t = e.touches[0];
-  scratch(t.clientX, t.clientY);
+  scratch(e.touches[0].clientX, e.touches[0].clientY);
 };
 
-/* ---------- REVEAL CHECK ---------- */
+/* ---------- REVEAL ---------- */
 function checkReveal() {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let cleared = 0;
-
   for (let i = 3; i < data.length; i += 4) {
     if (data[i] === 0) cleared++;
   }
-
   if (cleared / (data.length / 4) > 0.6) {
     revealBtn.style.display = "block";
   }
@@ -230,12 +246,13 @@ revealBtn.onclick = () => {
     return;
   }
 
+  instructionText = "click and drag your mouse again ;)";
   photo.src = `pic${currentPic}.jpg`;
   revealBtn.style.display = "none";
   startScratch();
 };
 
-/* ---------- UTILITY ---------- */
+/* ---------- UTIL ---------- */
 function showScreen(i) {
   screens.forEach(s => s.classList.remove("active"));
   screens[i].classList.add("active");
