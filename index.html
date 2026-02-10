@@ -31,12 +31,12 @@ html, body {
 }
 
 .glow {
-  text-shadow: 0 0 8px rgba(255,0,0,0.8);
+  text-shadow: 0 0 8px rgba(255,0,0,0.85);
 }
 
 button {
   margin-top: 30px;
-  padding: 14px 32px;
+  padding: 14px 34px;
   background: black;
   border: 1px solid red;
   color: red;
@@ -44,11 +44,11 @@ button {
   font-family: inherit;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 0 12px rgba(255,0,0,0.6);
+  box-shadow: 0 0 14px rgba(255,0,0,0.7);
 }
 
 button:hover {
-  box-shadow: 0 0 18px rgba(255,0,0,1);
+  box-shadow: 0 0 22px rgba(255,0,0,1);
 }
 
 #imageContainer {
@@ -79,18 +79,18 @@ canvas {
 
 <!-- SCREEN 1 -->
 <div class="screen active" id="s1">
-  <div id="hello" class="glow">hello,</div>
+  <div id="helloText" class="glow">hello,</div>
 </div>
 
 <!-- SCREEN 2 -->
 <div class="screen" id="s2">
-  <div id="taskText" class="glow">i need you to do something for me...</div>
+  <div id="taskText" class="glow"></div>
 </div>
 
-<!-- SCREEN 3 (REVEAL LOOP) -->
+<!-- SCREEN 3 -->
 <div class="screen" id="s3">
-  <div class="glow" style="position:absolute; top:40px;">
-    please click and drag your cursor across the screen
+  <div class="glow" style="position:absolute; top:40px; z-index:10;">
+    baby, please click and drag your mouse across the screen for me
   </div>
 
   <div id="imageContainer">
@@ -102,98 +102,125 @@ canvas {
 </div>
 
 <script>
-const screens = [...document.querySelectorAll(".screen")];
-const hello = document.getElementById("hello");
+const screens = document.querySelectorAll(".screen");
+const helloText = document.getElementById("helloText");
 const taskText = document.getElementById("taskText");
-const btnReveal = document.getElementById("revealBtn");
 const canvas = document.getElementById("scratch");
 const ctx = canvas.getContext("2d");
 const photo = document.getElementById("photo");
+const revealBtn = document.getElementById("revealBtn");
 
+let scratching = false;
 let currentPic = 1;
 const totalPics = 5;
 
 /* ---------- SCREEN 1 ---------- */
-setTimeout(() => hello.textContent = "hello, abdullah", 3000);
-
 setTimeout(() => {
-  const b = document.createElement("button");
-  b.textContent = "hello";
-  b.onclick = () => show(1);
-  screens[0].appendChild(b);
-}, 6000);
-
-/* ---------- SCREEN 2 ---------- */
-setTimeout(() => {
-  taskText.textContent += " as always...";
+  helloText.textContent = "hello, abdullah";
 }, 3000);
 
 setTimeout(() => {
-  const b = document.createElement("button");
-  b.textContent = "of course baby";
-  b.onclick = () => {
-    show(2);
-    startScratch();
+  const btn = document.createElement("button");
+  btn.textContent = "hello";
+  btn.onclick = () => {
+    showScreen(1);
+    startScreen2();
   };
-  screens[1].appendChild(b);
+  screens[0].appendChild(btn);
 }, 6000);
 
-/* ---------- SCRATCH LOGIC ---------- */
+/* ---------- SCREEN 2 ---------- */
+function startScreen2() {
+  taskText.textContent = "i need you to do something for me...";
+
+  setTimeout(() => {
+    taskText.textContent += " as always...";
+  }, 3000);
+
+  setTimeout(() => {
+    const btn = document.createElement("button");
+    btn.textContent = "of course baby";
+    btn.onclick = () => {
+      showScreen(2);
+      startScratch();
+    };
+    screens[1].appendChild(btn);
+  }, 6000);
+}
+
+/* ---------- SCRATCH ---------- */
 function startScratch() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
   ctx.globalCompositeOperation = "source-over";
   ctx.fillStyle = "black";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  let scratching = false;
-
-  canvas.onmousedown = () => scratching = true;
-  canvas.onmouseup = () => scratching = false;
-  canvas.onmousemove = e => {
-    if (!scratching) return;
-    ctx.globalCompositeOperation = "destination-out";
-    ctx.beginPath();
-    ctx.arc(e.clientX, e.clientY, 35, 0, Math.PI * 2);
-    ctx.fill();
-    checkReveal();
-  };
+  scratching = false;
 }
 
+function scratch(x, y) {
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.arc(x, y, 36, 0, Math.PI * 2);
+  ctx.fill();
+  checkReveal();
+}
+
+/* Mouse */
+canvas.onmousedown = () => scratching = true;
+canvas.onmouseup = () => scratching = false;
+canvas.onmousemove = e => {
+  if (!scratching) return;
+  scratch(e.clientX, e.clientY);
+};
+
+/* Touch (iPhone) */
+canvas.ontouchstart = () => scratching = true;
+canvas.ontouchend = () => scratching = false;
+canvas.ontouchmove = e => {
+  if (!scratching) return;
+  const t = e.touches[0];
+  scratch(t.clientX, t.clientY);
+};
+
+/* ---------- REVEAL CHECK ---------- */
 function checkReveal() {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let cleared = 0;
+
   for (let i = 3; i < data.length; i += 4) {
     if (data[i] === 0) cleared++;
   }
 
   if (cleared / (data.length / 4) > 0.6) {
-    btnReveal.style.display = "block";
+    revealBtn.style.display = "block";
   }
 }
 
-/* ---------- BUTTON BEHAVIOUR ---------- */
-btnReveal.onmouseenter = () => btnReveal.textContent = "yes";
-btnReveal.onmouseleave = () => btnReveal.textContent = "want to see more?";
+/* ---------- BUTTON ---------- */
+revealBtn.onmouseenter = () => revealBtn.textContent = "yes";
+revealBtn.onmouseleave = () => revealBtn.textContent = "want to see more?";
 
-btnReveal.onclick = () => {
+revealBtn.onclick = () => {
   currentPic++;
+
   if (currentPic > totalPics) {
-    btnReveal.textContent = "happy valentines day ;)";
-    btnReveal.onmouseenter = null;
-    btnReveal.onmouseleave = null;
-    btnReveal.onclick = () => location.reload();
+    revealBtn.textContent = "happy valentines day ;)";
+    revealBtn.onmouseenter = null;
+    revealBtn.onmouseleave = null;
+    revealBtn.onclick = () => location.reload();
     return;
   }
 
   photo.src = `pic${currentPic}.jpg`;
-  btnReveal.style.display = "none";
+  revealBtn.style.display = "none";
   startScratch();
 };
 
-/* ---------- UTILS ---------- */
-function show(i) {
+/* ---------- UTILITY ---------- */
+function showScreen(i) {
   screens.forEach(s => s.classList.remove("active"));
   screens[i].classList.add("active");
 }
