@@ -28,9 +28,7 @@ html, body {
 
 .active { display: flex; }
 
-.glow {
-  text-shadow: 0 0 8px rgba(255,0,0,0.85);
-}
+.glow { text-shadow: 0 0 8px rgba(255,0,0,0.85); }
 
 .cursor::after {
   content: "▌";
@@ -38,8 +36,8 @@ html, body {
 }
 
 @keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+  0%,50% { opacity: 1; }
+  51%,100% { opacity: 0; }
 }
 
 .centerBtn {
@@ -96,25 +94,20 @@ canvas {
 
 <body>
 
-<!-- SCREEN 1 -->
 <div class="screen active" id="s1">
   <div id="helloText" class="glow"></div>
 </div>
 
-<!-- SCREEN 2 -->
 <div class="screen" id="s2">
   <div id="taskText" class="glow"></div>
 </div>
 
-<!-- SCREEN 3 -->
 <div class="screen" id="s3">
   <div id="instruction" class="glow"></div>
-
   <div id="imageContainer">
     <img id="photo" src="pic1.jpg">
     <canvas id="scratch"></canvas>
   </div>
-
   <button id="revealBtn" class="bottomBtn">want to see more?</button>
 </div>
 
@@ -188,6 +181,9 @@ function startScreen2() {
 
 /* ---------- SCRATCH ---------- */
 function startScratch() {
+
+  revealBtn.style.display = "none";   // 🔥 FIX: force hide button at start
+
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -230,29 +226,38 @@ canvas.ontouchmove = e => {
   scratch(e.touches[0].clientX, e.touches[0].clientY);
 };
 
-/* ---------- REVEAL ---------- */
+/* ---------- REVEAL CHECK ---------- */
 function checkReveal() {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let cleared = 0;
   for (let i = 3; i < data.length; i += 4) {
     if (data[i] === 0) cleared++;
   }
-  if (cleared / (data.length / 4) > 0.6) {
+
+  if (cleared / (data.length / 4) > 0.6 && revealBtn.style.display !== "block") {
     revealBtn.style.display = "block";
   }
 }
 
-/* ---------- BUTTON ---------- */
-revealBtn.onmouseenter = () => revealBtn.textContent = "yes";
-revealBtn.onmouseleave = () => revealBtn.textContent = "want to see more?";
+/* ---------- BUTTON LOGIC ---------- */
+revealBtn.onmouseenter = () => {
+  if (currentPic <= totalPics)
+    revealBtn.textContent = "yes";
+};
+
+revealBtn.onmouseleave = () => {
+  if (currentPic <= totalPics)
+    revealBtn.textContent = "want to see more?";
+};
 
 revealBtn.onclick = () => {
+
   currentPic++;
 
   if (currentPic > totalPics) {
     revealBtn.classList.remove("bottomBtn");
     revealBtn.classList.add("centerBtn");
-    revealBtn.textContent = "happy valentines day ;)";
+    revealBtn.textContent = "happy happy valentines day ;)";
     revealBtn.onmouseenter = null;
     revealBtn.onmouseleave = null;
     revealBtn.onclick = () => location.reload();
@@ -261,7 +266,6 @@ revealBtn.onclick = () => {
 
   instructionText = "click and drag your mouse again ;)";
   photo.src = `pic${currentPic}.jpg`;
-  revealBtn.style.display = "none";
   startScratch();
 };
 
