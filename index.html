@@ -42,9 +42,17 @@ html, body {
   51%, 100% { opacity: 0; }
 }
 
-button {
+.centerBtn {
+  position: static;
+  margin-top: 40px;
+}
+
+.bottomBtn {
   position: absolute;
   bottom: 60px;
+}
+
+button {
   padding: 14px 34px;
   background: black;
   border: 1px solid red;
@@ -80,10 +88,8 @@ canvas {
   position: absolute;
   text-align: center;
   z-index: 10;
-}
-
-#revealBtn {
-  display: none;
+  font-size: 20px;
+  max-width: 80%;
 }
 </style>
 </head>
@@ -109,7 +115,7 @@ canvas {
     <canvas id="scratch"></canvas>
   </div>
 
-  <button id="revealBtn">want to see more?</button>
+  <button id="revealBtn" class="bottomBtn">want to see more?</button>
 </div>
 
 <script>
@@ -145,37 +151,39 @@ function typeAppend(el, text, speed = 70, callback) {
 /* ---------- SCREEN 1 ---------- */
 typeAppend(helloText, "hello,", 80, () => {
   setTimeout(() => {
-    typeAppend(helloText, " abdullah", 80);
+    typeAppend(helloText, " abdullah", 80, () => {
+      setTimeout(() => {
+        const btn = document.createElement("button");
+        btn.textContent = "hello";
+        btn.classList.add("centerBtn");
+        btn.onclick = () => {
+          showScreen(1);
+          startScreen2();
+        };
+        screens[0].appendChild(btn);
+      }, 3000);
+    });
   }, 3000);
 });
-
-setTimeout(() => {
-  const btn = document.createElement("button");
-  btn.textContent = "hello";
-  btn.onclick = () => {
-    showScreen(1);
-    startScreen2();
-  };
-  screens[0].appendChild(btn);
-}, 6000);
 
 /* ---------- SCREEN 2 ---------- */
 function startScreen2() {
   typeAppend(taskText, "i need you to do something for me...", 70, () => {
     setTimeout(() => {
-      typeAppend(taskText, " as always...", 70);
+      typeAppend(taskText, " as always...", 70, () => {
+        setTimeout(() => {
+          const btn = document.createElement("button");
+          btn.textContent = "of course baby";
+          btn.classList.add("centerBtn");
+          btn.onclick = () => {
+            showScreen(2);
+            startScratch();
+          };
+          screens[1].appendChild(btn);
+        }, 3000);
+      });
     }, 3000);
   });
-
-  setTimeout(() => {
-    const btn = document.createElement("button");
-    btn.textContent = "of course baby";
-    btn.onclick = () => {
-      showScreen(2);
-      startScratch();
-    };
-    screens[1].appendChild(btn);
-  }, 6000);
 }
 
 /* ---------- SCRATCH ---------- */
@@ -193,9 +201,6 @@ function startScratch() {
 }
 
 function scratch(x, y) {
-  if (!scratching) {
-    instruction.textContent = "";
-  }
   ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
   ctx.arc(x, y, 36, 0, Math.PI * 2);
@@ -204,7 +209,10 @@ function scratch(x, y) {
 }
 
 /* Mouse */
-canvas.onmousedown = () => scratching = true;
+canvas.onmousedown = () => {
+  scratching = true;
+  instruction.textContent = "";
+};
 canvas.onmouseup = () => scratching = false;
 canvas.onmousemove = e => {
   if (!scratching) return;
@@ -212,7 +220,10 @@ canvas.onmousemove = e => {
 };
 
 /* Touch */
-canvas.ontouchstart = () => scratching = true;
+canvas.ontouchstart = () => {
+  scratching = true;
+  instruction.textContent = "";
+};
 canvas.ontouchend = () => scratching = false;
 canvas.ontouchmove = e => {
   if (!scratching) return;
@@ -239,6 +250,8 @@ revealBtn.onclick = () => {
   currentPic++;
 
   if (currentPic > totalPics) {
+    revealBtn.classList.remove("bottomBtn");
+    revealBtn.classList.add("centerBtn");
     revealBtn.textContent = "happy valentines day ;)";
     revealBtn.onmouseenter = null;
     revealBtn.onmouseleave = null;
