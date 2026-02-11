@@ -24,6 +24,7 @@ html, body {
   align-items: center;
   flex-direction: column;
   position: relative;
+  text-align: center;
 }
 
 .active { display: flex; }
@@ -41,8 +42,7 @@ html, body {
 }
 
 .centerBtn {
-  position: static;
-  margin-top: 40px;
+  margin-top: 30px;
 }
 
 .bottomBtn {
@@ -84,10 +84,22 @@ canvas {
 
 #instruction {
   position: absolute;
-  text-align: center;
   z-index: 10;
   font-size: 20px;
   max-width: 80%;
+}
+
+#driveLink {
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+  animation: breathe 2.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0% { text-shadow: 0 0 5px red; }
+  50% { text-shadow: 0 0 20px red; }
+  100% { text-shadow: 0 0 5px red; }
 }
 </style>
 </head>
@@ -111,6 +123,10 @@ canvas {
   <button id="revealBtn" class="bottomBtn">want to see more?</button>
 </div>
 
+<div class="screen" id="s4">
+  <div id="finalText" class="glow"></div>
+</div>
+
 <script>
 const screens = document.querySelectorAll(".screen");
 const helloText = document.getElementById("helloText");
@@ -120,6 +136,7 @@ const canvas = document.getElementById("scratch");
 const ctx = canvas.getContext("2d");
 const photo = document.getElementById("photo");
 const revealBtn = document.getElementById("revealBtn");
+const finalText = document.getElementById("finalText");
 
 let scratching = false;
 let currentPic = 1;
@@ -141,23 +158,42 @@ function typeAppend(el, text, speed = 70, callback) {
   }, speed);
 }
 
+/* ---------- RESET TO START ---------- */
+function resetExperience() {
+  currentPic = 1;
+  photo.src = "pic1.jpg";
+  helloText.textContent = "";
+  taskText.textContent = "";
+  finalText.textContent = "";
+  revealBtn.className = "bottomBtn";
+  revealBtn.textContent = "want to see more?";
+  revealBtn.style.display = "none";
+  showScreen(0);
+  startScreen1();
+}
+
 /* ---------- SCREEN 1 ---------- */
-typeAppend(helloText, "hello,", 80, () => {
-  setTimeout(() => {
-    typeAppend(helloText, " abdullah", 80, () => {
-      setTimeout(() => {
-        const btn = document.createElement("button");
-        btn.textContent = "hello";
-        btn.classList.add("centerBtn");
-        btn.onclick = () => {
-          showScreen(1);
-          startScreen2();
-        };
-        screens[0].appendChild(btn);
-      }, 3000);
-    });
-  }, 3000);
-});
+function startScreen1() {
+  typeAppend(helloText, "hello,", 80, () => {
+    setTimeout(() => {
+      typeAppend(helloText, " abdullah", 80, () => {
+        setTimeout(() => {
+          const btn = document.createElement("button");
+          btn.textContent = "hello";
+          btn.classList.add("centerBtn");
+          btn.onclick = () => {
+            btn.remove();
+            showScreen(1);
+            startScreen2();
+          };
+          screens[0].appendChild(btn);
+        }, 3000);
+      });
+    }, 3000);
+  });
+}
+
+startScreen1();
 
 /* ---------- SCREEN 2 ---------- */
 function startScreen2() {
@@ -169,6 +205,7 @@ function startScreen2() {
           btn.textContent = "of course baby";
           btn.classList.add("centerBtn");
           btn.onclick = () => {
+            btn.remove();
             showScreen(2);
             startScratch();
           };
@@ -181,8 +218,7 @@ function startScreen2() {
 
 /* ---------- SCRATCH ---------- */
 function startScratch() {
-
-  revealBtn.style.display = "none";   // 🔥 FIX: force hide button at start
+  revealBtn.style.display = "none";
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -204,63 +240,34 @@ function scratch(x, y) {
   checkReveal();
 }
 
-/* Mouse */
-canvas.onmousedown = () => {
-  scratching = true;
-  instruction.textContent = "";
-};
+canvas.onmousedown = () => { scratching = true; instruction.textContent = ""; };
 canvas.onmouseup = () => scratching = false;
-canvas.onmousemove = e => {
-  if (!scratching) return;
-  scratch(e.clientX, e.clientY);
-};
+canvas.onmousemove = e => { if(scratching) scratch(e.clientX,e.clientY); };
 
-/* Touch */
-canvas.ontouchstart = () => {
-  scratching = true;
-  instruction.textContent = "";
-};
+canvas.ontouchstart = () => { scratching = true; instruction.textContent = ""; };
 canvas.ontouchend = () => scratching = false;
-canvas.ontouchmove = e => {
-  if (!scratching) return;
-  scratch(e.touches[0].clientX, e.touches[0].clientY);
-};
+canvas.ontouchmove = e => { if(scratching) scratch(e.touches[0].clientX,e.touches[0].clientY); };
 
-/* ---------- REVEAL CHECK ---------- */
 function checkReveal() {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let cleared = 0;
   for (let i = 3; i < data.length; i += 4) {
     if (data[i] === 0) cleared++;
   }
-
-  if (cleared / (data.length / 4) > 0.6 && revealBtn.style.display !== "block") {
+  if (cleared / (data.length / 4) > 0.6)
     revealBtn.style.display = "block";
-  }
 }
 
-/* ---------- BUTTON LOGIC ---------- */
-revealBtn.onmouseenter = () => {
-  if (currentPic <= totalPics)
-    revealBtn.textContent = "yes";
-};
-
-revealBtn.onmouseleave = () => {
-  if (currentPic <= totalPics)
-    revealBtn.textContent = "want to see more?";
-};
+/* ---------- REVEAL BUTTON ---------- */
+revealBtn.onmouseenter = () => revealBtn.textContent = "yes";
+revealBtn.onmouseleave = () => revealBtn.textContent = "want to see more?";
 
 revealBtn.onclick = () => {
-
   currentPic++;
 
   if (currentPic > totalPics) {
-    revealBtn.classList.remove("bottomBtn");
-    revealBtn.classList.add("centerBtn");
-    revealBtn.textContent = "happy happy valentines day ;)";
-    revealBtn.onmouseenter = null;
-    revealBtn.onmouseleave = null;
-    revealBtn.onclick = () => location.reload();
+    showScreen(3);
+    startFinalScreen();
     return;
   }
 
@@ -268,6 +275,34 @@ revealBtn.onclick = () => {
   photo.src = `pic${currentPic}.jpg`;
   startScratch();
 };
+
+/* ---------- FINAL SCREEN ---------- */
+function startFinalScreen() {
+  finalText.textContent = "";
+  const sentence = "there's a whole google drive folder full of these for you ";
+  typeAppend(finalText, sentence, 60, () => {
+
+    const link = document.createElement("span");
+    link.id = "driveLink";
+    link.textContent = "here";
+    link.onclick = () => {
+      window.open(
+        "https://drive.google.com/drive/folders/1azue6dl-v74OG62xIrmIM0wKZQtRT7Rg?usp=sharing",
+        "_blank"
+      );
+    };
+
+    finalText.appendChild(link);
+
+    setTimeout(() => {
+      const btn = document.createElement("button");
+      btn.textContent = "happy valentine's day ;)";
+      btn.classList.add("centerBtn");
+      btn.onclick = () => resetExperience();
+      screens[3].appendChild(btn);
+    }, 1500);
+  });
+}
 
 /* ---------- UTIL ---------- */
 function showScreen(i) {
@@ -278,3 +313,4 @@ function showScreen(i) {
 
 </body>
 </html>
+
