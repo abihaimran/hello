@@ -41,9 +41,7 @@ html, body {
   51%,100% { opacity: 0; }
 }
 
-.centerBtn {
-  margin-top: 30px;
-}
+.centerBtn { margin-top: 30px; }
 
 .bottomBtn {
   position: absolute;
@@ -120,7 +118,9 @@ canvas {
     <img id="photo" src="pic1.jpg">
     <canvas id="scratch"></canvas>
   </div>
-  <button id="revealBtn" class="bottomBtn">want to see more?</button>
+  <button id="revealBtn" class="bottomBtn" style="display:none;">
+    want to see more?
+  </button>
 </div>
 
 <div class="screen" id="s4">
@@ -141,7 +141,20 @@ const finalText = document.getElementById("finalText");
 let scratching = false;
 let currentPic = 1;
 const totalPics = 5;
-let instructionText = "baby, please click and drag your mouse across the screen for me";
+let instructionText;
+
+/* ---------- UTIL ---------- */
+function showScreen(i) {
+  screens.forEach(s => s.classList.remove("active"));
+  screens[i].classList.add("active");
+}
+
+function clearScreenButtons(screenIndex) {
+  const buttons = screens[screenIndex].querySelectorAll("button");
+  buttons.forEach(btn => {
+    if (btn.id !== "revealBtn") btn.remove();
+  });
+}
 
 /* ---------- TYPING ---------- */
 function typeAppend(el, text, speed = 70, callback) {
@@ -158,16 +171,26 @@ function typeAppend(el, text, speed = 70, callback) {
   }, speed);
 }
 
-/* ---------- RESET TO START ---------- */
+/* ---------- FULL RESET ---------- */
 function resetExperience() {
+
   currentPic = 1;
-  photo.src = "pic1.jpg";
+  instructionText = "baby, please click and drag your mouse across the screen for me";
+
   helloText.textContent = "";
   taskText.textContent = "";
   finalText.textContent = "";
-  revealBtn.className = "bottomBtn";
-  revealBtn.textContent = "want to see more?";
+  instruction.textContent = "";
+
+  photo.src = "pic1.jpg";
   revealBtn.style.display = "none";
+  revealBtn.textContent = "want to see more?";
+  revealBtn.className = "bottomBtn";
+
+  clearScreenButtons(0);
+  clearScreenButtons(1);
+  clearScreenButtons(3);
+
   showScreen(0);
   startScreen1();
 }
@@ -193,8 +216,6 @@ function startScreen1() {
   });
 }
 
-startScreen1();
-
 /* ---------- SCREEN 2 ---------- */
 function startScreen2() {
   typeAppend(taskText, "i need you to do something for me...", 70, () => {
@@ -218,7 +239,9 @@ function startScreen2() {
 
 /* ---------- SCRATCH ---------- */
 function startScratch() {
+
   revealBtn.style.display = "none";
+  instruction.textContent = "";
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -228,7 +251,7 @@ function startScratch() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   scratching = false;
-  instruction.textContent = "";
+
   typeAppend(instruction, instructionText, 60);
 }
 
@@ -258,7 +281,7 @@ function checkReveal() {
     revealBtn.style.display = "block";
 }
 
-/* ---------- REVEAL BUTTON ---------- */
+/* ---------- REVEAL ---------- */
 revealBtn.onmouseenter = () => revealBtn.textContent = "yes";
 revealBtn.onmouseleave = () => revealBtn.textContent = "want to see more?";
 
@@ -278,7 +301,10 @@ revealBtn.onclick = () => {
 
 /* ---------- FINAL SCREEN ---------- */
 function startFinalScreen() {
+
   finalText.textContent = "";
+  clearScreenButtons(3);
+
   const sentence = "there's a whole google drive folder full of these for you ";
   typeAppend(finalText, sentence, 60, () => {
 
@@ -304,11 +330,9 @@ function startFinalScreen() {
   });
 }
 
-/* ---------- UTIL ---------- */
-function showScreen(i) {
-  screens.forEach(s => s.classList.remove("active"));
-  screens[i].classList.add("active");
-}
+/* ---------- START ---------- */
+resetExperience();
+
 </script>
 
 </body>
